@@ -6,20 +6,18 @@ var margin = {
 };
 
 var mouseOrig;
-var anglesOrig = [0,0];
-var anglesCurr = [0,0];
-var mSc = 8;                  // mouse scale for rotations
-// var topog;
-// var globeOrig;
+var anglesOrig = [0, 0];
+var anglesCurr = [0, 0];
+var zoomCurr = 300;
+var zoomMin = 30;
+var zoomMax = 2500;
+var mSc = 8; // mouse scale for rotations
 
 var width = 1000 - margin.left - margin.right; // base number needs to match wrapper
 var height = 700 - margin.top - margin.bottom;
 
-// var projection = d3.geoAlbers()
-// var projection = d3.geoAzimuthalEqualArea()
 var projection = d3.geoOrthographic()
-    // var projection = d3.geoEquirectangular()
-    .scale(300)
+    .scale(zoomCurr)
     .clipAngle(90)
     .translate([width / 2, height / 2])
     .rotate(anglesCurr);
@@ -29,19 +27,11 @@ var path = d3.geoPath()
 
 var graticule = d3.geoGraticule();
 
-var zoom = d3.zoom()
-    // .translate(projection.translate())
-    // .scale(projection.scale())
-    // .scaleExtent([height, 8 * height])
-    .scaleExtent([0.25, 8])
-    .on("zoom", zoomFunc);
-
 var chart = d3.select(".chart")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
 
 var g = chart.append("g");
-
 
 // this URL is for a 110-m map stored in a GitHub repo
 var url1 = "https://raw.githubusercontent.com/domwakeling/FreeCodeCamp-Project-20/master/data/world-110m.json";
@@ -56,19 +46,7 @@ d3.queue(2)
         renderMap(topology, meteors);
     });
 
-
-// d3.json(url, function(error, topology) {
 function renderMap(topology, meteors) {
-    // console.log(topology.objects.countries);
-    // console.log(topojson.object(topology, topology.objects.countries));
-
-
-    g.selectAll("path")
-        .data(graticule.lines())
-        .enter()
-        .append("path")
-        .attr("d", path);
-
 
     g.selectAll("path.country")
         .data(topojson.feature(topology, topology.objects.countries)
@@ -78,31 +56,25 @@ function renderMap(topology, meteors) {
         .attr("class", "country")
         .attr("d", path);
 
-        chart.on("mousedown", mouseDown);
-        // .on("zoom", zoom);
+    chart.on("mousedown", mouseDown)
+        .on("mousewheel", zoomed);
+    // .on("zoom", zoom);
+    // .call("zoom");
 
-        d3.select(window)
+    d3.select(window)
         .on("mousemove", mouseMoved)
         .on("mouseup", mouseUp);
-
-
-    // chart
-        // .call(d3.zoom().on("zoom", function() {
-        //     g.attr("transform", d3.event.transform)
-        // }));
-        // .call(zoom);
-    // .call(zoom.event);
-
-
 
     console.log("Need to send data to view meteors");
 }
 // });
 
-function zoomFunc() {
-    // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-    console.log(d3.event);
-    g.attr("transform", d3.event.transform);
+function zoomed() {
+    zoomCurr *= (100 + d3.event.deltaY) / 100;
+    zoomCurr = Math.min(zoomMax, Math.max(zoomMin, zoomCurr));
+    projection.scale(zoomCurr);
+    refresh();
+    d3.event.preventDefault;
 }
 
 
@@ -204,39 +176,29 @@ function zoomFunc() {
 // }
 
 function mouseDown() {
-  mouseOrig = [d3.event.pageX, d3.event.pageY];
-  console.log("orig:", anglesOrig, "curr:",anglesCurr)
-  anglesOrig = [anglesCurr[0], anglesCurr[1]];
-  // o0 = projection.origin();
-  d3.event.preventDefault();
+    mouseOrig = [d3.event.pageX, d3.event.pageY];
+    console.log("orig:", anglesOrig, "curr:", anglesCurr)
+    anglesOrig = [anglesCurr[0], anglesCurr[1]];
+    d3.event.preventDefault();
 }
 
 function mouseMoved() {
-  if (mouseOrig) {
-    var mouseCurr = [d3.event.pageX, d3.event.pageY];
-    anglesCurr = [anglesOrig[0] - (mouseOrig[0] - mouseCurr[0]) / mSc, anglesOrig[1] - (mouseCurr[1] - mouseOrig[1]) / mSc];
-    projection.rotate(anglesCurr);
-    // circle.origin(o1)
-    refresh();
-  }
+    if (mouseOrig) {
+        var mouseCurr = [d3.event.pageX, d3.event.pageY];
+        anglesCurr = [anglesOrig[0] - (mouseOrig[0] - mouseCurr[0]) / mSc, anglesOrig[1] - (mouseCurr[1] - mouseOrig[1]) / mSc];
+        projection.rotate(anglesCurr);
+        refresh();
+    }
 }
 
 function mouseUp() {
-  if (mouseOrig) {
-    mouseMoved();
-    mouseOrig = null;
-  }
+    if (mouseOrig) {
+        mouseMoved();
+        mouseOrig = null;
+    }
 }
 
 function refresh() {
 
-      // redraw land
-      chart.selectAll("path").attr("d", path);
-
-      // redraw circles
-      // svg.selectAll(".point").attr("d", path.projection(proj));
-
-      // redraw circles
-      // svg.selectAll(".circles").attr("d", path.projection(proj));
-
-    }
+    chart.selectAll("path.country").attr("d", path);
+}
