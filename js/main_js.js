@@ -26,10 +26,12 @@ var path = d3.geoPath()
     .projection(projection);
 
 // var zoom = d3.behaviour.zoom()
-//     .translate(projection.translate())
-//     .scale(projection.scale())
-//     .scaleExtent([height, 8 * height])
-//     .on("zoom", zoomFun);
+var zoom = d3.zoom()
+    // .translate(projection.translate())
+    // .scale(projection.scale())
+    // .scaleExtent([height, 8 * height])
+    .scaleExtent([1, 8])
+    .on("zoom", zoomFunc);
 
 var chart = d3.select(".chart")
     .attr("width", width + margin.left + margin.right)
@@ -37,11 +39,23 @@ var chart = d3.select(".chart")
 
 var g = chart.append("g");
 
+
 // this URL is for a 110-m map stored in GoogleDrive; unable to store locally due to JSON/Chrome issues
-var url = "https://doc-0k-cc-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/o3as7at4ktbu9m0ihfif2jh2vt3mc3dh/1483804800000/01571833550273622618/*/0BwlT0RUM_dmvb3ZEYThmX2lMMTg"
+var url1 = "https://www.dropbox.com/s/p4sa1icaez8h5eo/world-110m.json?dl=0";
+// var url1 = "https://doc-0k-cc-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/o3as7at4ktbu9m0ihfif2jh2vt3mc3dh/1483804800000/01571833550273622618/*/0BwlT0RUM_dmvb3ZEYThmX2lMMTg";
+var url2 = "https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/meteorite-strike-data.json";
 
-d3.json(url, function(error, topology) {
+d3.queue(2)
+    .defer(d3.json, url1)
+    .defer(d3.json, url2)
+    .await(function(error, topology, meteors) {
+        if (error) throw error;
+        renderMap(topology, meteors);
+    });
 
+
+// d3.json(url, function(error, topology) {
+function renderMap(topology, meteors) {
     // console.log(topology.objects.countries);
     // console.log(topojson.object(topology, topology.objects.countries));
     g.selectAll("path")
@@ -49,8 +63,19 @@ d3.json(url, function(error, topology) {
             .features)
         .enter()
         .append("path")
-        .attr("d", path)
-});
+        .attr("d", path);
+
+    chart
+        .call(zoom);
+        // .call(zoom.event);
+
+    console.log(meteors);
+}
+// });
+
+function zoomFunc() {
+    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+}
 
 
 // // define tooltip
