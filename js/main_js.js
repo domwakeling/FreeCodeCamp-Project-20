@@ -1,5 +1,3 @@
-// var url = "https://raw.githubusercontent.com/DealPete/forceDirected/master/countries.json";
-
 var margin = {
     top: 0,
     right: 0,
@@ -7,28 +5,30 @@ var margin = {
     left: 0
 };
 
+var mouseOrig;
+var anglesOrig = [0,0];
+var anglesCurr = [0,0];
+var mSc = 8;                  // mouse scale for rotations
+// var topog;
+// var globeOrig;
+
 var width = 1000 - margin.left - margin.right; // base number needs to match wrapper
 var height = 700 - margin.top - margin.bottom;
-
-
-//     //   .append("g")
-//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-//
 
 // var projection = d3.geoAlbers()
 // var projection = d3.geoAzimuthalEqualArea()
 var projection = d3.geoOrthographic()
     // var projection = d3.geoEquirectangular()
-    .scale(500)
+    .scale(300)
     .clipAngle(90)
-    .translate([width / 2, height / 2]);
+    .translate([width / 2, height / 2])
+    .rotate(anglesCurr);
 
 var path = d3.geoPath()
     .projection(projection);
 
 var graticule = d3.geoGraticule();
 
-// var zoom = d3.behaviour.zoom()
 var zoom = d3.zoom()
     // .translate(projection.translate())
     // .scale(projection.scale())
@@ -78,17 +78,24 @@ function renderMap(topology, meteors) {
         .attr("class", "country")
         .attr("d", path);
 
+        chart.on("mousedown", mouseDown);
+        // .on("zoom", zoom);
 
-    chart
+        d3.select(window)
+        .on("mousemove", mouseMoved)
+        .on("mouseup", mouseUp);
+
+
+    // chart
         // .call(d3.zoom().on("zoom", function() {
         //     g.attr("transform", d3.event.transform)
         // }));
-        .call(zoom);
+        // .call(zoom);
     // .call(zoom.event);
 
 
 
-    console.log(meteors);
+    console.log("Need to send data to view meteors");
 }
 // });
 
@@ -195,3 +202,41 @@ function zoomFunc() {
 //     d.fx = null;
 //     d.fy = null;
 // }
+
+function mouseDown() {
+  mouseOrig = [d3.event.pageX, d3.event.pageY];
+  console.log("orig:", anglesOrig, "curr:",anglesCurr)
+  anglesOrig = [anglesCurr[0], anglesCurr[1]];
+  // o0 = projection.origin();
+  d3.event.preventDefault();
+}
+
+function mouseMoved() {
+  if (mouseOrig) {
+    var mouseCurr = [d3.event.pageX, d3.event.pageY];
+    anglesCurr = [anglesOrig[0] - (mouseOrig[0] - mouseCurr[0]) / mSc, anglesOrig[1] - (mouseCurr[1] - mouseOrig[1]) / mSc];
+    projection.rotate(anglesCurr);
+    // circle.origin(o1)
+    refresh();
+  }
+}
+
+function mouseUp() {
+  if (mouseOrig) {
+    mouseMoved();
+    mouseOrig = null;
+  }
+}
+
+function refresh() {
+
+      // redraw land
+      chart.selectAll("path").attr("d", path);
+
+      // redraw circles
+      // svg.selectAll(".point").attr("d", path.projection(proj));
+
+      // redraw circles
+      // svg.selectAll(".circles").attr("d", path.projection(proj));
+
+    }

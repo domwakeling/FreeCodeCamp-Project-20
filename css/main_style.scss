@@ -1,5 +1,8 @@
+$main-bg-color: #222;
+$chart-bg-color: #444;
+
 body {
-    background-color: #222;
+    background-color: $main-bg-color;
 }
 
 h2 {
@@ -12,7 +15,7 @@ h2 {
 .wrapper {
     width: 1000px;
     margin: 0 auto;
-    background-color: #333;
+    background-color: $chart-bg-color;
 }
 
 .chart {
@@ -94,7 +97,7 @@ text.axis-legend {
 path {
     stroke: white;
     stroke-width: 0.5px;
-    fill: #7ae;
+    fill: $chart-bg-color;
 }
 path.country {
   fill: #4a5;

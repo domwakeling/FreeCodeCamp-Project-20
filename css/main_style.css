@@ -10,7 +10,7 @@ h2 {
 .wrapper {
   width: 1000px;
   margin: 0 auto;
-  background-color: #333; }
+  background-color: #444; }
 
 .chart {
   fill: #999; }
@@ -72,7 +72,7 @@ text.axis-legend {
 path {
   stroke: white;
   stroke-width: 0.5px;
-  fill: #7ae; }
+  fill: #444; }
 
 path.country {
   fill: #4a5; }
