@@ -1,5 +1,7 @@
 $main-bg-color: #222;
 $chart-bg-color: #444;
+$meteor-color: #f00;
+$land-color: #4a5;
 
 body {
     background-color: $main-bg-color;
@@ -12,37 +14,16 @@ h2 {
     margin-bottom: 0;
 }
 
+.header-title {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 .wrapper {
     width: 1000px;
     margin: 0 auto;
     background-color: $chart-bg-color;
-}
-
-.chart {
-    fill: #999;
-    // rect {
-    //   fill: steelblue;
-    //   stroke-width: 0px;
-    // }
-    text {
-        fill: #eee;
-        font: 10px sans-serif;
-        text-anchor: start;
-    }
-}
-
-.axis {
-    .domain,
-    .tick,
-    .tick line {
-        stroke: #eee;
-    }
-
-    text {
-        fill: #eee;
-        font: 10pt sans-serif;
-        text-anchor: end;
-    }
+    border: 1px solid white;
 }
 
 div.tooltip {
@@ -57,48 +38,16 @@ div.tooltip {
     pointer-events: none;
 }
 
-text.chart-title {
-    fill: #eee;
-    font-size: 20px;
-    font-weight: bold;
-    text-anchor: middle;
-}
-
-text.axis-legend {
-    fill: #ccc;
-    font-size: 14px;
-    text-anchor: end;
-}
-
-.clean {
-    fill: green;
-}
-
-.doper {
-    fill: red;
-}
-
-.hover-circle {
-    stroke: white;
-    stroke-width: 2px;
-}
-
-.links line {
-    stroke: #999;
-    stroke-opacity: 0.6;
-    stroke-width: 1.5px;
-}
-
-.nodes circle {
-    stroke: #fff;
-    stroke-width: 1.5px;
-}
-
 path {
     stroke: white;
     stroke-width: 0.5px;
     fill: $chart-bg-color;
 }
+
 path.country {
-  fill: #4a5;
+    fill: $land-color;
+}
+
+path.meteors {
+    fill: $meteor-color;
 }

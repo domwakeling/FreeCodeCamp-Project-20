@@ -12,9 +12,14 @@ var zoomCurr = 300;
 var zoomMin = 30;
 var zoomMax = 2500;
 var mSc = 8; // mouse scale for rotations
+var zoomFac = 150; // factor for zoom sensitivity (higher = less sensitive)
 
 var width = 1000 - margin.left - margin.right; // base number needs to match wrapper
 var height = 700 - margin.top - margin.bottom;
+
+var months = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
 
 var projection = d3.geoOrthographic()
     .scale(zoomCurr)
@@ -25,6 +30,8 @@ var projection = d3.geoOrthographic()
 var path = d3.geoPath()
     .projection(projection);
 
+var circle = d3.geoCircle();
+
 var graticule = d3.geoGraticule();
 
 var chart = d3.select(".chart")
@@ -33,9 +40,13 @@ var chart = d3.select(".chart")
 
 var g = chart.append("g");
 
-// this URL is for a 110-m map stored in a GitHub repo
+// define tooltip
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+// URLs for [1] a 110-m map stored in a GitHub repo and [2] the meterorite strike data
 var url1 = "https://raw.githubusercontent.com/domwakeling/FreeCodeCamp-Project-20/master/data/world-110m.json";
-// and this one is to the meteor-strike data
 var url2 = "https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/meteorite-strike-data.json";
 
 d3.queue(2)
@@ -58,122 +69,58 @@ function renderMap(topology, meteors) {
 
     chart.on("mousedown", mouseDown)
         .on("mousewheel", zoomed);
-    // .on("zoom", zoom);
-    // .call("zoom");
 
     d3.select(window)
         .on("mousemove", mouseMoved)
         .on("mouseup", mouseUp);
 
-    console.log("Need to send data to view meteors");
+    renderMeteors(meteors);
 }
-// });
+
+function renderMeteors(meteors) {
+
+    var meteorsFixed = meteors.features.filter(function(d) {
+        return d.geometry != null
+    }); // remove anything with no coordinates
+
+    g.selectAll("path.meteors")
+        .data(meteorsFixed)
+        .enter()
+        .append("path")
+        .datum(function(d) {
+            var meteorObj = circle.radius(radiusForMass(d.properties.mass)).center(d.geometry.coordinates)();
+            meteorObj.year = d.properties.year;
+            meteorObj.mass = d.properties.mass;
+            return meteorObj;
+        })
+        .attr("class", "meteors")
+        .attr("d", path)
+        .on("mouseover", function(d) {
+            var date = d.year;
+            var dateArr = date != null ? date.split("-") : ["Unknown"];
+            var str = dateArr.length > 1 ? months[parseInt(dateArr[1]) - 1] + " " + dateArr[0] : dateArr[0];
+            str = str + "<br/>" + (d.mass != null ? d3.format(",d")(d.mass) + " kg" : "Mass unkown");
+            div.transition()
+                .duration(200)
+                .style("opacity", 1.0);
+            div.html(str)
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        }).on("mouseout", function(d) {
+            div.transition()
+                .duration(200)
+                .style("opacity", 0);
+        });
+}
+
 
 function zoomed() {
-    zoomCurr *= (100 + d3.event.deltaY) / 100;
+    zoomCurr *= (zoomFac + d3.event.deltaY) / zoomFac;
     zoomCurr = Math.min(zoomMax, Math.max(zoomMin, zoomCurr));
     projection.scale(zoomCurr);
     refresh();
     d3.event.preventDefault;
 }
-
-
-// // define tooltip
-// var div = d3.select("body").append("div")
-//     .attr("class", "tooltip")
-//     .style("opacity", 0);
-//
-// d3.json(url, function(error, data) {
-//
-//     if (error) throw error;
-//
-//     var links = data.links;
-//     var nodes = data.nodes;
-//
-//     var link = chart.append("g")
-//         .attr("class", "links")
-//         .selectAll("line")
-//         .data(links)
-//         .enter().append("line");
-//
-//     // var node = chart.selectAll("g")
-//
-//     var node = chart.append("g")
-//         .attr("class", "nodes")
-//         // .selectAll("circle")
-//         .selectAll("circle")
-//         .data(nodes)
-//         .enter().append("g");
-//
-//     var nodeFill = flags.selectAll(".nodes")
-//         // .selectAll("img")
-//         .data(nodes)
-//         .enter().append("img")
-//         .attr("class", function(d) {
-//             return "flag flag-" + d.code;
-//         })
-//         .on("mouseover", function(d) {
-//             div.transition()
-//                 .duration(200)
-//                 .style("opacity", 1.0);
-//             div.html(d.country)
-//                 .style("left", (d3.event.pageX) + "px")
-//                 .style("top", (d3.event.pageY - 28) + "px");
-//         })
-//         .call(d3.drag()
-//             .on("start", dragstarted)
-//             .on("drag", dragged)
-//             .on("end", dragended));;
-//
-//     simulation
-//         .nodes(nodes)
-//         .on("tick", ticked);
-//
-//     simulation.force("link")
-//         .links(data.links);
-//
-//     function ticked() {
-//         link
-//             .attr("x1", function(d) {
-//                 return d.source.x;
-//             })
-//             .attr("y1", function(d) {
-//                 return d.source.y;
-//             })
-//             .attr("x2", function(d) {
-//                 return d.target.x;
-//             })
-//             .attr("y2", function(d) {
-//                 return d.target.y;
-//             });
-//
-//         nodeFill
-//             .style("left", function(d) {
-//                 return d.x - (25 / 2) + "px";
-//             })
-//             .style("top", function(d) {
-//                 return d.y - (15 / 2) + "px";
-//             });
-//     }
-//
-// });
-//
-// function dragstarted(d) {
-//     if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-//     d.fx = d.x;
-//     d.fy = d.y;
-// }
-//
-// function dragged(d) {
-//     d.fx = d3.event.x;
-//     d.fy = d3.event.y;
-// }
-//
-// function dragended(d) {
-//     if (!d3.event.active) simulation.alphaTarget(0);
-//     d.fx = null;
-//     d.fy = null;
-// }
 
 function mouseDown() {
     mouseOrig = [d3.event.pageX, d3.event.pageY];
@@ -199,6 +146,10 @@ function mouseUp() {
 }
 
 function refresh() {
+    chart.selectAll("path").attr("d", path);
+}
 
-    chart.selectAll("path.country").attr("d", path);
+function radiusForMass(m) {
+    if (!m) return 0.1;
+    return Math.max(1, Math.floor(Math.log10(parseInt(m)))) * 0.25;
 }
